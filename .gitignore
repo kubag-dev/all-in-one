@@ -1,0 +1,11 @@
+# Virtual environment dirs
+venv
+
+# Development environment variables
+.env
+
+# Python files and cache
+__pycache__
+
+# Sqlite database
+database.db
