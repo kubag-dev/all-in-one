@@ -1,73 +1,127 @@
-from fastapi import Depends
+from typing import Any
+
+from sqlmodel import delete
 from sqlmodel import select
-from sqlmodel import Session
+from sqlmodel import update
 
 from core.database import get_session
+from todos.models.todo_file import TodoFile
 from todos.models.todo_task import TodoTask
 from todos import types
 
 
 class TodoTaskRepository:
-    def assign_new_position(
-        todo_task_id: types.TodoTaskId,
-        new_position: int,
-        session: Session = Depends(get_session),
-    ) -> None:
-        """
-        MOVE LOGIC TO LOGIC
-        """
-        pointed_task = session.get(TodoTask, todo_task_id)
-        tasks = session.exec(
-            select(TodoTask).where(TodoTask.todo_file_id == pointed_task.todo_file_id)
-        ).all()
-        if new_position > pointed_task.position:
-            tasks_to_reposition = [
-                task
-                for task in tasks
-                if task.position <= new_position
-                and task.position > pointed_task.position
-            ]
-            for task in tasks_to_reposition:
-                task.position = task.position - 1
-        elif new_position < pointed_task.position:
-            tasks_to_reposition = [
-                task
-                for task in tasks
-                if task.position >= new_position
-                and task.position < pointed_task.position
-            ]
-            for task in tasks_to_reposition:
-                task.position = task.position + 1
-        else:
-            return None
+    def __init__(self):
+        self.session = get_session()
 
-        pointed_task.position = None
-        session.add(pointed_task)
-        session.commit()
-        session.add_all(tasks_to_reposition)
-        session.commit()
-
-    def generate_new_position(
-        todo_file_id: types.TodoFileId, session: Session = Depends(get_session)
-    ) -> int:
-        todo_tasks = session.exec(
+    def fetch_all_tasks(self, *, todo_file_id: types.TodoFileId) -> list[TodoTask]:
+        return self.session.exec(
             select(TodoTask).where(TodoTask.todo_file_id == todo_file_id)
         ).all()
-        return max([todo_task.position for todo_task in todo_tasks])
 
-    def delete_task_and_reposition(
-        todo_task_id: types.TodoTaskId, session: Session = Depends(get_session)
+    def create_task(
+        self, *, todo_file_id: types.TodoFileId, todo_task: TodoTask
+    ) -> TodoTask:
+        parent = self.session.get(TodoFile, todo_file_id)
+        if not parent:
+            raise Exception("Parent not found")
+
+        new_todo_task = TodoTask(**todo_task.model_dump(), todo_file_id=todo_file_id)
+
+        self.session.add(new_todo_task)
+        self.session.commit()
+        self.session.refresh(new_todo_task)
+        return new_todo_task  # todo: return DTO
+
+    def update_task(
+        self, *, todo_task_id: types.TodoTaskId, todo_update_data: dict[str, Any]
+    ):
+        todo_task = self.session.get(TodoTask, todo_task_id)
+        if not todo_task:
+            raise Exception("Todo task not found")  # todo: make custom error classes
+
+        for key, value in todo_update_data.items():
+            setattr(todo_task, key, value)
+
+        self.session.add(todo_task)
+        self.session.commit()
+        self.session.refresh(todo_task)
+        return todo_task  # todo: return DTO
+
+    def assign_new_position(
+        self,
+        *,
+        todo_task_id: types.TodoTaskId,
+        new_position: int,
     ) -> None:
-        pointed_task = session.get(TodoTask, todo_task_id)
-        todo_tasks = session.exec(
-            select(TodoTask).where(
-                TodoTask.todo_file_id == pointed_task.todo_file_id,
-                TodoTask.position > pointed_task.position,
+        current_position, todo_file_id = self.session.exec(
+            select(TodoTask.position, TodoTask.todo_file_id).where(
+                TodoTask.id == todo_task_id
             )
+        ).first()
+        if current_position == new_position:
+            return None
+
+        self.session.exec(update(TodoTask).where(TodoTask.todo_file_id == todo_task_id).values(position=None))  # type: ignore
+        self.session.commit()
+
+        if new_position > current_position:
+            self.session.exec(
+                update(TodoTask)
+                .where(
+                    (TodoTask.todo_file_id == todo_file_id)
+                    & (TodoTask.position <= new_position)
+                    & (TodoTask.position > current_position)
+                )
+                .values({TodoTask.position: TodoTask.position - 1})
+            )
+        elif new_position < current_position:
+            self.session.exec(
+                update(TodoTask)
+                .where(
+                    (TodoTask.todo_file_id == todo_file_id)
+                    & (TodoTask.position >= new_position)
+                    & (TodoTask.position < current_position)
+                )
+                .values({TodoTask.position: TodoTask.position + 1})
+            )
+
+        self.session.exec(update(TodoTask).where(TodoTask.todo_file_id == todo_task_id).values(position=new_position))  # type: ignore
+        self.session.commit()
+        return None
+
+    def generate_new_position(
+        self,
+        *,
+        todo_file_id: types.TodoFileId,
+    ) -> int:
+        todo_tasks_positions = self.session.exec(
+            select(TodoTask.position).where(TodoTask.todo_file_id == todo_file_id)
         ).all()
-        for task in todo_tasks:
-            task.position - 1
-        session.delete(pointed_task)
-        session.commit()
-        session.add_all(todo_tasks)
-        session.commit()
+        if not todo_tasks_positions:
+            return 0
+        return int(max(todo_tasks_positions))
+
+    def delete_task_and_reposition(self, *, todo_task_id: types.TodoTaskId) -> None:
+        current_position, todo_file_id = self.session.exec(
+            select(TodoTask.position, TodoTask.todo_file_id).where(
+                TodoTask.id == todo_task_id
+            )
+        ).first()
+
+        if not todo_file_id:
+            raise Exception("Todo file not found")
+
+        self.session.exec(delete(TodoTask).where(TodoTask.id == todo_task_id))  # type: ignore
+        self.session.commit()
+
+        self.session.exec(
+            update(TodoTask)
+            .where(
+                TodoTask.todo_file_id == todo_file_id,
+                TodoTask.position > current_position,
+            )
+            .values({TodoTask.position: TodoTask.position - 1})
+        )
+        self.session.commit()
+        return None

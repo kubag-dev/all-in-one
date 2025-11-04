@@ -1,11 +1,15 @@
+# Python files and cache
+__pycache__
+
+# Pycharm files
+.idea
+
 # Virtual environment dirs
 venv
+.venv
 
 # Development environment variables
 .env
-
-# Python files and cache
-__pycache__
 
 # Sqlite database
 database.db
