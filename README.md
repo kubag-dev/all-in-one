@@ -43,7 +43,7 @@ Current tools:
 --- routes      / endpoints
 --- schemas     / send/received data serialization
 ```
-Aach directory also can have helpers that some times might be just placed in root directory of a module.
+Each directory also can have helpers that some times might be just placed in root directory of a module.
 
 ### Advanced modules with custom logic
 <font color="ORANGE">**WIP**</font> (no current need)
@@ -51,6 +51,7 @@ Aach directory also can have helpers that some times might be just placed in roo
 ## Code/Architectural conventions
 The project goes with my own interpretation of **clean code** and **clean architecture** guidelines by Uncle Bob, nothing is written, it's only my interpretation. If there will be decision on them there will be a separate file containg rules. For code formatting **Black** is used.
 
+- **fetch** is reserved for managing the database and data around the app, **get** is reserved for HTTP methods
 # 3. Run the app
 It's only a development build, requiring environment with <font color="ORANGE">**python3.12**</font> with installed packages from `requirements.txt`
 
