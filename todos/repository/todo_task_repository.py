@@ -11,6 +11,11 @@ from todos import types
 
 
 class TodoTaskRepository:
+    """
+    Module is too small and basic to force returns of separate DTOs
+    on pydantic's BaseModel
+    """
+
     def __init__(self):
         self.session = get_session()
 
@@ -31,14 +36,14 @@ class TodoTaskRepository:
         self.session.add(new_todo_task)
         self.session.commit()
         self.session.refresh(new_todo_task)
-        return new_todo_task  # todo: return DTO
+        return new_todo_task
 
     def update_task(
         self, *, todo_task_id: types.TodoTaskId, todo_update_data: dict[str, Any]
     ):
         todo_task = self.session.get(TodoTask, todo_task_id)
         if not todo_task:
-            raise Exception("Todo task not found")  # todo: make custom error classes
+            raise Exception("Todo task not found")
 
         for key, value in todo_update_data.items():
             setattr(todo_task, key, value)
@@ -46,7 +51,7 @@ class TodoTaskRepository:
         self.session.add(todo_task)
         self.session.commit()
         self.session.refresh(todo_task)
-        return todo_task  # todo: return DTO
+        return todo_task
 
     def assign_new_position(
         self,
