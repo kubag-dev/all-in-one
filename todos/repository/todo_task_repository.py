@@ -1,6 +1,8 @@
 from typing import Any
 
+from fastapi import Depends
 from sqlmodel import delete
+from sqlmodel import Session
 from sqlmodel import select
 from sqlmodel import update
 
@@ -16,8 +18,8 @@ class TodoTaskRepository:
     on pydantic's BaseModel
     """
 
-    def __init__(self):
-        self.session = get_session()
+    def __init__(self, session: Session = Depends(get_session)):
+        self.session = session
 
     def fetch_all_tasks(self, *, todo_file_id: types.TodoFileId) -> list[TodoTask]:
         return self.session.exec(

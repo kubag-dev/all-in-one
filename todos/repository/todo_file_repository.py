@@ -1,5 +1,6 @@
+from fastapi import Depends
 from sqlalchemy.exc import IntegrityError
-from sqlmodel import select
+from sqlmodel import select, Session
 
 from core.database import get_session
 from todos import types
@@ -16,8 +17,8 @@ class TodoFileRepository:
     on pydantic's BaseModel
     """
 
-    def __init__(self):
-        self.session = get_session()
+    def __init__(self, session: Session = Depends(get_session)):
+        self.session = session
 
     def fetch_active_todo_files(self):
         active_todo_files = self.session.exec(

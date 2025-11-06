@@ -1,4 +1,4 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from fastapi import HTTPException
 from fastapi import status
 
@@ -17,19 +17,21 @@ router = APIRouter(prefix="/todo")
 
 
 @router.get("/", response_model=list[TodoFile])
-def get_active_todo_files():
-    return TodoFileRepository().fetch_active_todo_files()
+def get_active_todo_files(todo_file_repository: TodoFileRepository = Depends()):
+    return todo_file_repository.fetch_active_todo_files()
 
 
 @router.get("/trash", response_model=list[TodoFile])
-def get_inactive_todo_files():
-    return TodoFileRepository().fetch_inactive_todo_files()
+def get_inactive_todo_files(todo_file_repository: TodoFileRepository = Depends()):
+    return todo_file_repository.fetch_inactive_todo_files()
 
 
 @router.get("/{todo_file_id}", response_model=TodoFile)
-def get_todo_file(todo_file_id: types.TodoFileId):
+def get_todo_file(
+    todo_file_id: types.TodoFileId, todo_file_repository: TodoFileRepository = Depends()
+):
     try:
-        todo_file = TodoFileRepository().fetch_todo_file(todo_file_id=todo_file_id)
+        todo_file = todo_file_repository.fetch_todo_file(todo_file_id=todo_file_id)
     except InstanceNotFoundError:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Todo File not found"
@@ -38,9 +40,11 @@ def get_todo_file(todo_file_id: types.TodoFileId):
 
 
 @router.post("/", response_model=TodoFile)
-def create_todo_file(todo_file: TodoFile):
+def create_todo_file(
+    todo_file: TodoFile, todo_file_repository: TodoFileRepository = Depends()
+):
     try:
-        new_todo_file = TodoFileRepository().create_todo_file(todo_file=todo_file)
+        new_todo_file = todo_file_repository.create_todo_file(todo_file=todo_file)
     except InstanceAlreadyExistsError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
@@ -51,9 +55,10 @@ def create_todo_file(todo_file: TodoFile):
 def update_todo_file(
     todo_file_id: types.TodoFileId,
     todo_file_data: TodoFileUpdateSchema,
+    todo_file_repository: TodoFileRepository = Depends(),
 ):
     try:
-        todo_file = TodoFileRepository().update_todo_file(
+        todo_file = todo_file_repository.update_todo_file(
             todo_file_id=todo_file_id, todo_file_data=todo_file_data
         )
     except InstanceNotFoundError as e:
@@ -64,8 +69,10 @@ def update_todo_file(
 
 
 @router.delete("/{todo_file_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_todo_file(todo_file_id: types.TodoFileId):
+def delete_todo_file(
+    todo_file_id: types.TodoFileId, todo_file_repository: TodoFileRepository = Depends()
+):
     try:
-        TodoFileRepository().delete_todo_file(todo_file_id=todo_file_id)
+        todo_file_repository.delete_todo_file(todo_file_id=todo_file_id)
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))

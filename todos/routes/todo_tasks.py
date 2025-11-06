@@ -1,4 +1,5 @@
 from fastapi import APIRouter
+from fastapi import Depends
 from fastapi import HTTPException
 from fastapi import Path
 from fastapi import status
@@ -13,17 +14,21 @@ router = APIRouter(prefix="/todo/{todo_file_id}/tasks")
 
 
 @router.get("/", response_model=list[TodoTask])
-def get_todo_tasks(todo_file_id: types.TodoFileId = Path(...)):
-    return TodoTaskRepository().fetch_all_tasks(todo_file_id=todo_file_id)
+def get_todo_tasks(
+    todo_file_id: types.TodoFileId = Path(...),
+    todo_task_repository: TodoTaskRepository = Depends(),
+):
+    return todo_task_repository.fetch_all_tasks(todo_file_id=todo_file_id)
 
 
 @router.post("/", response_model=TodoTask)
 def create_todo_task(
     todo_task: TodoTask,
     todo_file_id: types.TodoFileId = Path(...),
+    todo_task_repository: TodoTaskRepository = Depends(),
 ):
     try:
-        todo_task = TodoTaskRepository().create_task(
+        todo_task = todo_task_repository.create_task(
             todo_file_id=todo_file_id, todo_task=todo_task
         )
     except Exception as e:
@@ -35,8 +40,9 @@ def create_todo_task(
 def update_todo_file(
     todo_task_id: types.TodoTaskId,
     todo_file_data: TodoTaskUpdateSchema,
+    todo_task_repository: TodoTaskRepository = Depends(),
 ):
-    todo_task_repository = TodoTaskRepository()
+    todo_task_repository = todo_task_repository
 
     todo_update_data = todo_file_data.model_dump(exclude_unset=True)
     position = todo_update_data.pop("position", None)
@@ -56,5 +62,7 @@ def update_todo_file(
 
 
 @router.delete("/{todo_task_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_todo_task(todo_task_id: types.TodoTaskId):
-    TodoTaskRepository().delete_task_and_reposition(todo_task_id=todo_task_id)
+def delete_todo_task(
+    todo_task_id: types.TodoTaskId, todo_task_repository: TodoTaskRepository = Depends()
+):
+    todo_task_repository.delete_task_and_reposition(todo_task_id=todo_task_id)
