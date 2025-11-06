@@ -2,6 +2,11 @@ from fastapi import APIRouter
 from fastapi import HTTPException
 from fastapi import status
 
+from todos.exceptions import (
+    InstanceNotFoundError,
+    InstanceAlreadyExistsError,
+    UniqueConstraintViolatedError,
+)
 from todos.models.todo_file import TodoFile
 from todos.repository.todo_file_repository import TodoFileRepository
 from todos.schemas.todo_file_update_schema import TodoFileUpdateSchema
@@ -25,7 +30,7 @@ def get_inactive_todo_files():
 def get_todo_file(todo_file_id: types.TodoFileId):
     try:
         todo_file = TodoFileRepository().fetch_todo_file(todo_file_id=todo_file_id)
-    except:
+    except InstanceNotFoundError:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Todo File not found"
         )
@@ -36,7 +41,7 @@ def get_todo_file(todo_file_id: types.TodoFileId):
 def create_todo_file(todo_file: TodoFile):
     try:
         new_todo_file = TodoFileRepository().create_todo_file(todo_file=todo_file)
-    except Exception as e:
+    except InstanceAlreadyExistsError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
     return new_todo_file
@@ -51,11 +56,10 @@ def update_todo_file(
         todo_file = TodoFileRepository().update_todo_file(
             todo_file_id=todo_file_id, todo_file_data=todo_file_data
         )
-    except Exception as e:
+    except InstanceNotFoundError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    except UniqueConstraintViolatedError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
-    # except CustomException1 as e: HTTP 404
-    # except CustomException2 as e: HTTP 400
-
     return todo_file
 
 
