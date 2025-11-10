@@ -58,12 +58,3 @@ It's only a development build, requiring environment with <font color="ORANGE">*
 Try from a project root folder
 
 `fastapi dev main.py`
-
-
-step 1
-todo: add task position logic
-todo: move database actions to repositories
-
-step 2
-todo: create jinja templates
-todo: create landing page 
