@@ -1,7 +1,12 @@
 {% extends "base.html" %}
 {% block title %}Home{% endblock %}
+
 {% block content %}
   <h1>Your todo lists:</h1>
+
+  <button id="create-btn" style="margin-bottom: 12px;">Create new file</button>
+
   <ul id="todo-list">Loading...</ul>
+
   <script src="{{ url_for('gui', path='todos/scripts/todo_file.js') }}"></script>
 {% endblock %}
