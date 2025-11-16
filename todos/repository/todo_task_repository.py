@@ -27,13 +27,14 @@ class TodoTaskRepository:
         ).all()
 
     def create_task(
-        self, *, todo_file_id: types.TodoFileId, todo_task: TodoTask
+        self, *, todo_file_id: types.TodoFileId, todo_task: TodoTask, position: int
     ) -> TodoTask:
         parent = self.session.get(TodoFile, todo_file_id)
         if not parent:
             raise Exception("Parent not found")
 
         new_todo_task = TodoTask(**todo_task.model_dump(), todo_file_id=todo_file_id)
+        new_todo_task.position = position
 
         self.session.add(new_todo_task)
         self.session.commit()
@@ -105,9 +106,9 @@ class TodoTaskRepository:
         todo_tasks_positions = self.session.exec(
             select(TodoTask.position).where(TodoTask.todo_file_id == todo_file_id)
         ).all()
-        if not todo_tasks_positions:
+        if not len(todo_tasks_positions):
             return 0
-        return int(max(todo_tasks_positions))
+        return int(max(todo_tasks_positions)) + 1
 
     def delete_task_and_reposition(self, *, todo_task_id: types.TodoTaskId) -> None:
         current_position, todo_file_id = self.session.exec(

@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}Home{% endblock %}
+
+{% block content %}
+  <h1>Your todo lists:</h1>
+
+  <div id="todo-root" data-todo-file-id="{{ todo_file_id }}"></div>
+
+  <button id="create-btn" style="margin-bottom: 12px;">Add a task</button>
+
+  <ul id="todo-tasks-list">Loading...</ul>
+
+  <script src="{{ url_for('gui', path='todos/scripts/todo_tasks.js') }}"></script>
+{% endblock %}

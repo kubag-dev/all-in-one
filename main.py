@@ -7,8 +7,9 @@ from home.routes import root_route
 from todos.routes import todo_files
 from todos.routes import todo_tasks
 
-from gui.todos.views import todo_file_view
 from gui.home.views import home_view
+from gui.todos.views import todo_file_view
+from gui.todos.views import todo_tasks_view
 
 
 @asynccontextmanager
@@ -27,6 +28,7 @@ app.include_router(todo_tasks.router)
 # Frontend views
 app.include_router(home_view.router)
 app.include_router(todo_file_view.router)
+app.include_router(todo_tasks_view.router)
 
 
 app.mount("/gui", StaticFiles(directory="gui"), name="gui")

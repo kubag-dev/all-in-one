@@ -14,7 +14,7 @@ class TodoTask(SQLModel, table=True):
     __table_args__ = (UniqueConstraint("todo_file_id", "position"),)
 
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True, index=True)
-    text: str = Field(default="")
+    text: str = Field()
     is_completed: bool = Field(default=False)
     position: int | None = Field()
 

@@ -1,20 +1,21 @@
 document.addEventListener("DOMContentLoaded", async () => {
-  const list = document.getElementById("todo-list");
+  const list = document.getElementById("todo-tasks-list");
   const createBtn = document.getElementById("create-btn");
+  const todoFileId = document.getElementById("todo-root").dataset.todoFileId;
 
   createBtn.addEventListener("click", async () => {
-    const title = prompt("Enter a name for the new todo file:");
-    if (!title) return;
+    const text = prompt("Enter a name for a todo task:");
+    if (!text) return;
 
     try {
-      const res = await fetch(`/todo/`, {
+      const res = await fetch(`/todo/${todoFileId}/tasks/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title }),
+        body: JSON.stringify({ text }),
       });
 
       if (!res.ok) {
-        alert("Failed to create file.");
+        alert("Failed to create task.");
         return;
       }
 
@@ -22,13 +23,13 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     } catch (err) {
       console.error(err);
-      alert("Network error while creating file.");
+      alert("Network error while creating task.");
     }
   });
 
   async function loadTodos() {
     try {
-      const res = await fetch(`/todo/`);
+      const res = await fetch(`/todo/${todoFileId}/tasks`);
       const todos = await res.json();
 
       list.innerHTML = "";
@@ -44,10 +45,10 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         del.addEventListener("click", async (e) => {
           e.preventDefault();
-          if (!confirm(`Delete "${t.title}"?`)) return;
+          if (!confirm(`Delete "${t.text}"?`)) return;
 
-          try {
-            const resp = await fetch(`/todo/${t.id}`, { method: "DELETE" });
+          try {1
+            const resp = await fetch(`/todo/${todoFileId}/tasks/${t.id}`, { method: "DELETE" });
             if (resp.ok) li.remove();
             else alert("Failed to delete item.");
           } catch (err) {
@@ -57,8 +58,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         });
 
         const title = document.createElement("a");
-        title.textContent = t.title;
-        title.href = `/gui/todo/${t.id}/tasks`;
+        title.textContent = t.text;
 
         li.appendChild(del);
         li.appendChild(title);

@@ -28,8 +28,11 @@ def create_todo_task(
     todo_task_repository: TodoTaskRepository = Depends(),
 ):
     try:
+        task_position = todo_task_repository.generate_new_position(
+            todo_file_id=todo_file_id
+        )
         todo_task = todo_task_repository.create_task(
-            todo_file_id=todo_file_id, todo_task=todo_task
+            todo_file_id=todo_file_id, todo_task=todo_task, position=task_position
         )
     except Exception as e:
         raise HTTPException(status_code=404, detail=e)
