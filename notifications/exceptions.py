@@ -1,0 +1,2 @@
+class InstanceNotFoundError(Exception):
+    pass

@@ -1,6 +1,7 @@
 from fastapi import Depends
 from sqlalchemy.exc import IntegrityError
-from sqlmodel import select, Session
+from sqlmodel import select
+from sqlmodel import Session
 
 from core.database import get_session
 from todos import types
